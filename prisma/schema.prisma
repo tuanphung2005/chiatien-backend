@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = 5
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  password     String
+  displayName  String
+  avatar       String?
+  pushToken    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  groups           GroupMember[]
+  paidExpenses     Expense[]     @relation("PaidBy")
+  expenseShares    ExpenseParticipant[]
+  createdGroups    Group[]       @relation("CreatedBy")
+  uploadedReceipts Receipt[]
+}
+
+model Group {
+  id          String    @id @default(cuid())
+  name        String
+  emoji       String    @default("💰")
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  createdBy   User      @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById String
+  members     GroupMember[]
+  expenses    Expense[]
+}
+
+model GroupMember {
+  id        String   @id @default(cuid())
+  joinedAt  DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+
+  @@unique([userId, groupId])
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  amount      Float
+  description String
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  group       Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId     String
+  paidBy      User      @relation("PaidBy", fields: [paidById], references: [id])
+  paidById    String
+  participants ExpenseParticipant[]
+  receipt     Receipt?  @relation(fields: [receiptId], references: [id])
+  receiptId   String?
+}
+
+model ExpenseParticipant {
+  id        String   @id @default(cuid())
+  amount    Float
+  settled   Boolean  @default(false)
+
+  expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  expenseId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@unique([expenseId, userId])
+}
+
+model Receipt {
+  id          String    @id @default(cuid())
+  imageUrl    String
+  publicId    String
+  parsedData  Json?
+  createdAt   DateTime  @default(now())
+
+  uploadedBy    User      @relation(fields: [uploadedById], references: [id])
+  uploadedById  String
+  expenses      Expense[]
+}

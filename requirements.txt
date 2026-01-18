@@ -1,0 +1,17 @@
+# ChiaTien Python Backend
+
+fastapi==0.115.0
+uvicorn[standard]==0.30.0
+prisma==0.15.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+cloudinary==1.41.0
+exponent-server-sdk==2.1.0
+python-multipart==0.0.9
+python-dotenv==1.0.1
+pydantic==2.9.0
+pydantic-settings==2.5.0
+
+# PaddleOCR (CPU version)
+paddlepaddle==2.6.0
+paddleocr==2.7.3
