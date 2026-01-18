@@ -22,14 +22,14 @@ async def get_expenses(
     expenses = await db.expense.find_many(
         where=where_clause,
         include={
-            "paidBy": {"select": {"id": True, "displayName": True, "avatar": True}},
+            "paidBy": True,
             "participants": {
-                "include": {"user": {"select": {"id": True, "displayName": True}}}
+                "include": {"user": True}
             },
-            "group": {"select": {"id": True, "name": True, "emoji": True}},
+            "group": True,
             "receipt": True,
         },
-        order_by={"date": "desc"},
+        order={"date": "desc"},
     )
 
     return expenses
@@ -85,14 +85,14 @@ async def create_expense(
             },
         },
         include={
-            "paidBy": {"select": {"id": True, "displayName": True}},
+            "paidBy": True,
             "participants": {
-                "include": {"user": {"select": {"id": True, "displayName": True}}}
+                "include": {"user": True}
             },
             "group": {
                 "include": {
                     "members": {
-                        "include": {"user": {"select": {"id": True, "pushToken": True}}}
+                        "include": {"user": True}
                     }
                 }
             },

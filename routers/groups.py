@@ -14,19 +14,17 @@ async def get_groups(current_user: JwtPayload = Depends(get_current_user)):
         include={
             "members": {
                 "include": {
-                    "user": {"select": {"id": True, "displayName": True, "avatar": True}}
+                    "user": True
                 }
             },
             "expenses": {
                 "include": {
-                    "paidBy": {"select": {"id": True, "displayName": True}},
+                    "paidBy": True,
                     "participants": True,
                 },
-                "order_by": {"createdAt": "desc"},
-                "take": 5,
             },
         },
-        order_by={"updatedAt": "desc"},
+        order={"updatedAt": "desc"},
     )
 
     groups_with_balance = []
@@ -91,7 +89,7 @@ async def create_group(
         include={
             "members": {
                 "include": {
-                    "user": {"select": {"id": True, "displayName": True, "avatar": True}}
+                    "user": True
                 }
             }
         },
@@ -109,31 +107,21 @@ async def get_group(
         include={
             "members": {
                 "include": {
-                    "user": {
-                        "select": {
-                            "id": True,
-                            "displayName": True,
-                            "avatar": True,
-                            "username": True,
-                        }
-                    }
+                    "user": True
                 }
             },
             "expenses": {
                 "include": {
-                    "paidBy": {
-                        "select": {"id": True, "displayName": True, "avatar": True}
-                    },
+                    "paidBy": True,
                     "participants": {
                         "include": {
-                            "user": {"select": {"id": True, "displayName": True}}
+                            "user": True
                         }
                     },
                     "receipt": True,
                 },
-                "order_by": {"date": "desc"},
             },
-            "createdBy": {"select": {"id": True, "displayName": True}},
+            "createdBy": True,
         },
     )
 

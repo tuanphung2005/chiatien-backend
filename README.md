@@ -59,25 +59,27 @@ If running the Python backend in WSL and PostgreSQL on Windows, you need to:
    - Open Windows Defender Firewall
    - Allow port 5432 for inbound connections
 
-## Alternative: Run Natively on Windows
+# main setup for dev env
 
-If you have Python 3.10 or 3.11 on Windows, you can run natively:
-
-```powershell
-cd C:\Users\tuan2\coding\chiatien-rn\python
-
-# Create venv
-python -m venv venv
-
-# Install (PaddleOCR may not work on Python 3.12+ on Windows)
-.\venv\Scripts\pip install -r requirements.txt
-
-# Generate Prisma
-.\venv\Scripts\prisma generate
-
-# Run
-.\venv\Scripts\uvicorn main:app --port 8000
-```
+1. Set up PostgreSQL database and user
+bash
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD '1';"
+sudo -u postgres createdb chiatien
+2. Navigate to the Python backend and create virtual environment
+bash
+cd /mnt/c/Users/tuan2/coding/chiatien-rn/python
+python3 -m venv venv
+source venv/bin/activate
+3. Install dependencies
+bash
+pip install -r requirements.txt
+4. Generate Prisma client and push schema
+bash
+prisma generate
+prisma db push
+5. Run the backend
+bash
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
 ## API Endpoints
 
@@ -122,3 +124,10 @@ EXPO_PUBLIC_API_URL=http://localhost:8000
 ```
 
 For Android emulator, use `10.0.2.2:8000`. For physical devices, use your machine's LAN IP.
+
+# portfowarding
+
+hostname -I | awk '{print $1}
+172.25.186.242
+
+PS C:\Users\tuan2> netsh interface portproxy add v4tov4 listenport=8000 listenaddress=0.0.0.0 connectport=8000 connectaddress=$(wsl hostname -I)                                                                                                                                                                                                                        PS C:\Users\tuan2> netsh interface portproxy add v4tov4 listenport=8000 listenaddress=0.0.0.0 connectport=8000 connectaddress=172.25.186.242                                                                                                                                                                                                                            PS C:\Users\tuan2> netsh advfirewall firewall add rule name="Python Backend 8000" dir=in action=allow protocol=TCP localport=8000                                                                                                               Ok.         
