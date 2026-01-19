@@ -137,3 +137,34 @@ async def update_profile(
         "avatar": user.avatar,
         "spendingLimit": user.spendingLimit,
     }
+
+
+@router.get("/search", response_model=list[UserResponse])
+async def search_users(
+    q: str,
+    current_user: JwtPayload = Depends(get_current_user)
+):
+    if not q or len(q) < 2:
+        return []
+
+    users = await db.user.find_many(
+        where={
+            "OR": [
+                {"username": {"contains": q, "mode": "insensitive"}},
+                {"displayName": {"contains": q, "mode": "insensitive"}},
+            ],
+            "NOT": {
+                "id": current_user.userId
+            }
+        },
+        take=10
+    )
+
+    return [
+        UserResponse(
+            id=user.id,
+            username=user.username,
+            displayName=user.displayName,
+            avatar=user.avatar,
+        ) for user in users
+    ]

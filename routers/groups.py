@@ -214,3 +214,80 @@ async def delete_group(
     await db.group.delete(where={"id": group_id})
 
     return {"message": "Đã xóa nhóm"}
+
+
+@router.delete("/{group_id}/leave")
+async def leave_group(
+    group_id: str, current_user: JwtPayload = Depends(get_current_user)
+):
+    group = await db.group.find_unique(
+        where={"id": group_id},
+        include={"members": True},
+    )
+
+    if not group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nhóm không tồn tại",
+        )
+    
+    # Check if user is the creator
+    if group.createdById == current_user.userId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Chủ nhóm không thể rời nhóm. Vui lòng xóa nhóm hoặc chuyển quyền sở hữu.",
+        )
+
+    # Check if user is a member
+    membership = next((m for m in group.members if m.userId == current_user.userId), None)
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bạn không phải là thành viên của nhóm này",
+        )
+
+    await db.groupmember.delete(where={"id": membership.id})
+
+    return {"message": "Đã rời nhóm"}
+
+
+@router.delete("/{group_id}/members/{user_id}")
+async def remove_member(
+    group_id: str,
+    user_id: str,
+    current_user: JwtPayload = Depends(get_current_user)
+):
+    group = await db.group.find_unique(
+        where={"id": group_id},
+        include={"members": True},
+    )
+
+    if not group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nhóm không tồn tại",
+        )
+
+    # Only creator can remove members
+    if group.createdById != current_user.userId:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Chỉ chủ nhóm mới có quyền xóa thành viên",
+        )
+    
+    if user_id == current_user.userId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Không thể tự xóa chính mình. Hãy sử dụng chức năng rời nhóm.",
+        )
+
+    membership = next((m for m in group.members if m.userId == user_id), None)
+    if not membership:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Thành viên không tồn tại trong nhóm",
+        )
+
+    await db.groupmember.delete(where={"id": membership.id})
+
+    return {"message": "Đã mời thành viên ra khỏi nhóm"}

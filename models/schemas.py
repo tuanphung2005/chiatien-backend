@@ -77,6 +77,15 @@ class ExpenseSettle(BaseModel):
     participantUserId: Optional[str] = None
 
 
+class ExpenseUpdate(BaseModel):
+    amount: Optional[float] = None
+    description: Optional[str] = None
+    date: Optional[str] = None
+    paidById: Optional[str] = None
+    participants: Optional[list[ParticipantCreate]] = None
+    receiptId: Optional[str] = None
+
+
 class ReceiptParseRequest(BaseModel):
     imageBase64: str
 
