@@ -19,6 +19,7 @@ model User {
   displayName  String
   avatar       String?
   pushToken    String?
+  spendingLimit Float?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -27,6 +28,9 @@ model User {
   expenseShares    ExpenseParticipant[]
   createdGroups    Group[]       @relation("CreatedBy")
   uploadedReceipts Receipt[]
+  sentInvitations     GroupInvitation[] @relation("Inviter")
+  receivedInvitations GroupInvitation[] @relation("Invitee")
+  notifications       Notification[]
 }
 
 model Group {
@@ -34,6 +38,7 @@ model Group {
   name        String
   emoji       String    @default("💰")
   description String?
+  inviteCode  String    @unique @default(cuid())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -41,6 +46,7 @@ model Group {
   createdById String
   members     GroupMember[]
   expenses    Expense[]
+  invitations GroupInvitation[]
 }
 
 model GroupMember {
@@ -95,4 +101,32 @@ model Receipt {
   uploadedBy    User      @relation(fields: [uploadedById], references: [id])
   uploadedById  String
   expenses      Expense[]
+}
+
+model GroupInvitation {
+  id        String   @id @default(cuid())
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+  inviter   User     @relation("Inviter", fields: [inviterId], references: [id])
+  inviterId String
+  invitee   User?    @relation("Invitee", fields: [inviteeId], references: [id])
+  inviteeId String?
+
+  @@unique([groupId, inviteeId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  body      String
+  data      Json?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
 }

@@ -93,3 +93,23 @@ class ReceiptParseResponse(BaseModel):
     items: list[ReceiptItem]
     total: float
     message: str
+
+
+class InvitationCreate(BaseModel):
+    groupId: str
+    inviteeUsername: str
+
+
+class InvitationResponse(BaseModel):
+    id: str
+    status: str
+    groupId: str
+    inviterId: str
+
+
+class UserUpdate(BaseModel):
+    displayName: Optional[str] = None
+    avatar: Optional[str] = None
+    spendingLimit: Optional[float] = None
+    pushToken: Optional[str] = None
+

@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 
 from database import db
-from models.schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse
+from models.schemas import LoginRequest, RegisterRequest, TokenResponse, UserResponse, UserUpdate
 from services.auth_service import (
     hash_password,
     verify_password,
     sign_token,
+    get_current_user,
     JwtPayload,
 )
 
@@ -84,3 +85,55 @@ async def register(request: RegisterRequest):
             avatar=user.avatar,
         ),
     )
+
+
+@router.get("/me")
+async def get_profile(current_user: JwtPayload = Depends(get_current_user)):
+    user = await db.user.find_unique(where={"id": current_user.userId})
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Người dùng không tồn tại",
+        )
+    return {
+        "id": user.id,
+        "username": user.username,
+        "displayName": user.displayName,
+        "avatar": user.avatar,
+        "spendingLimit": user.spendingLimit,
+        "pushToken": user.pushToken,
+    }
+
+
+@router.patch("/me")
+async def update_profile(
+    request: UserUpdate, current_user: JwtPayload = Depends(get_current_user)
+):
+    update_data = {}
+    if request.displayName is not None:
+        update_data["displayName"] = request.displayName
+    if request.avatar is not None:
+        update_data["avatar"] = request.avatar
+    if request.spendingLimit is not None:
+        update_data["spendingLimit"] = request.spendingLimit
+    if request.pushToken is not None:
+        update_data["pushToken"] = request.pushToken
+
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Không có dữ liệu cập nhật",
+        )
+
+    user = await db.user.update(
+        where={"id": current_user.userId},
+        data=update_data,
+    )
+
+    return {
+        "id": user.id,
+        "username": user.username,
+        "displayName": user.displayName,
+        "avatar": user.avatar,
+        "spendingLimit": user.spendingLimit,
+    }
